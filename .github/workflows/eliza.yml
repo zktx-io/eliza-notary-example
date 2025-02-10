@@ -1,0 +1,41 @@
+name: Comment Triggered Workflow
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  run-on-comment:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Determine branch
+        id: determine_branch
+        run: |
+          if [[ -n "${{ github.event.issue.pull_request }}" ]]; then
+            echo "Running on PR..."
+            PR_NUMBER=${{ github.event.issue.number }}
+            echo "BRANCH=refs/pull/${PR_NUMBER}/head" >> $GITHUB_ENV
+          else
+            echo "Running on issue..."
+            echo "BRANCH=main" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH }}
+
+      - name: Run Eliza Notary
+        uses: zktx-io/eliza-notary@main
+        with:
+          project-path: './integer_package'
+          report-path: './audit-report'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
