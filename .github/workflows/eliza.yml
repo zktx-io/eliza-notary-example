@@ -1,6 +1,8 @@
 name: Comment Triggered Workflow
 
 on:
+  issues:
+    types: [opened]
   issue_comment:
     types: [created]
 
